@@ -38,6 +38,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   nav_msgs
   sensor_msgs
+  tf
 )
 
 include_directories(${catkin_INCLUDE_DIRS})
@@ -107,7 +108,7 @@ include_directories(${catkin_INCLUDE_DIRS})
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES dji_imu_extraction
-	CATKIN_DEPENDS roscpp nav_msgs sensor_msgs
+	CATKIN_DEPENDS roscpp nav_msgs sensor_msgs tf
 #  DEPENDS system_lib
 )
 
