@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
 	ros::Subscriber sub_1 = n.subscribe(odom_topic1, 1, odometry1_callback);
 	ros::Subscriber sub_2 = n.subscribe(odom_topic2, 1, odometry2_callback);
 
-	ros::Publisher pub = n.advertise<nav_msgs::Odometry>(odom_topic2+"/corrected", 1);
+	ros::Publisher pub_1 = n.advertise<nav_msgs::Odometry>(odom_topic1+"/corrected", 1);
+	ros::Publisher pub_2 = n.advertise<nav_msgs::Odometry>(odom_topic2+"/corrected", 1);
 
 	bool initialization_done = false;
 
@@ -75,7 +76,11 @@ int main(int argc, char *argv[])
 			tf::quaternionTFToMsg(odom2_transform.getRotation(), odom_corrected.pose.pose.orientation);
 			
 			// Corrected odometry publication.
-			pub.publish(odom_corrected);
+			pub_2.publish(odom_corrected);
+
+			odom1.header.frame_id = "odom";
+			odom1.child_frame_id = "base_link";
+			pub_1.publish(odom1);
 		}
 
 		ros::spinOnce();
