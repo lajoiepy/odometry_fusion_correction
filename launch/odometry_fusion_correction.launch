@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="odometry_fusion_correction" type="odometry_fusion_correction" name="odometry_fusion_correction">
+        <rosparam command="load" file="$(find odometry_fusion_correction)/cfg/odometry_fusion_correction.yaml" />
+    </node>
+</launch>
