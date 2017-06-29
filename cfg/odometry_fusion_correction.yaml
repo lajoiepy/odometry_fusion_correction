@@ -3,5 +3,5 @@ child_frame_id: base_link
 odom0_topic: /odometry
 odom1_topic: /rtabmap/odom
 correction_suffix: /corrected
-odom0_covariance_diag_value: 0.01
+odom0_covariance_diag_value: 0.2
 # odom1_covariance_diag_value: null

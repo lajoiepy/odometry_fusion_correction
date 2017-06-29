@@ -5,19 +5,19 @@
 
 nav_msgs::Odometry odom0;
 nav_msgs::Odometry odom1;
-bool first_odom0_received = false;
-bool first_odom1_received = false;
+bool has_new_odom0_received = false;
+bool has_new_odom1_received = false;
 
 void odometry0_callback(const nav_msgs::Odometry::ConstPtr& odom_msg)
 {
 	odom0 = *odom_msg;
-	if(!first_odom0_received) first_odom0_received = true;
+	if(!has_new_odom0_received) has_new_odom0_received = true;
 }
 
 void odometry1_callback(const nav_msgs::Odometry::ConstPtr& odom_msg)
 {
 	odom1 = *odom_msg;
-	if(!first_odom1_received) first_odom1_received = true;
+	if(!has_new_odom1_received) has_new_odom1_received = true;
 }
 
 int main(int argc, char *argv[])
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 	{
 		nav_msgs::Odometry odom_corrected;
 
-		if (!initialization_done && first_odom0_received && first_odom1_received)
+		if (!initialization_done && has_new_odom0_received && has_new_odom1_received)
 		{			
 			tf::Quaternion odom0_orientation;
 			tf::quaternionMsgToTF(odom0.pose.pose.orientation, odom0_orientation);
@@ -76,33 +76,41 @@ int main(int argc, char *argv[])
 		
 		if (initialization_done)
 		{
-			tf::Quaternion odom1_orientation;
-			tf::quaternionMsgToTF(odom1.pose.pose.orientation, odom1_orientation);
-			
-			tf::Transform odom1_transform(odom1_orientation, tf::Vector3(odom1.pose.pose.position.x,odom1.pose.pose.position.y,odom1.pose.pose.position.z));
-			
-			odom1_transform = transform_correction * odom1_transform;
+			if ( has_new_odom1_received )
+			{
+				tf::Quaternion odom1_orientation;
+				tf::quaternionMsgToTF(odom1.pose.pose.orientation, odom1_orientation);
+				
+				tf::Transform odom1_transform(odom1_orientation, tf::Vector3(odom1.pose.pose.position.x,odom1.pose.pose.position.y,odom1.pose.pose.position.z));
+				
+				odom1_transform = transform_correction * odom1_transform;
 
-			// Position correction.
-			odom_corrected = odom1;
-			odom_corrected.pose.pose.position.x = odom1_transform.getOrigin().getX();
-			odom_corrected.pose.pose.position.y = odom1_transform.getOrigin().getY();
-			odom_corrected.pose.pose.position.z = odom1_transform.getOrigin().getZ();
-			tf::quaternionTFToMsg(odom1_transform.getRotation(), odom_corrected.pose.pose.orientation);
+				// Position correction.
+				odom_corrected = odom1;
+				odom_corrected.pose.pose.position.x = odom1_transform.getOrigin().getX();
+				odom_corrected.pose.pose.position.y = odom1_transform.getOrigin().getY();
+				odom_corrected.pose.pose.position.z = odom1_transform.getOrigin().getZ();
+				tf::quaternionTFToMsg(odom1_transform.getRotation(), odom_corrected.pose.pose.orientation);
+				
+				// Corrected odometries publication.
+				odom_corrected.header.frame_id = odom_frame_id;
+				odom_corrected.child_frame_id = child_frame_id;
+				if ( odom1_covariance_diag_value != -1 )
+					odom_corrected.pose.covariance = { odom1_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom1_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom1_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom1_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom1_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom1_covariance_diag_value };
+				pub_1.publish(odom_corrected);
+			}
 			
-			// Corrected odometries publication.
-			odom_corrected.header.frame_id = odom_frame_id;
-			odom_corrected.child_frame_id = child_frame_id;
-			if ( odom1_covariance_diag_value != -1 )
-				odom_corrected.pose.covariance = { odom1_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom1_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom1_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom1_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom1_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom1_covariance_diag_value };
-			pub_1.publish(odom_corrected);
-
-			odom0.header.frame_id = odom_frame_id;
-			odom0.child_frame_id = child_frame_id;
-			if ( odom0_covariance_diag_value != -1 )
-				odom0.pose.covariance = { odom0_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom0_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom0_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom0_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom0_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom0_covariance_diag_value };
-			pub_0.publish(odom0);
+			if ( has_new_odom0_received )
+			{
+				odom0.header.frame_id = odom_frame_id;
+				odom0.child_frame_id = child_frame_id;
+				if ( odom0_covariance_diag_value != -1 )
+					odom0.pose.covariance = { odom0_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom0_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom0_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom0_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom0_covariance_diag_value, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, odom0_covariance_diag_value };
+				pub_0.publish(odom0);
+			}
 		}
+		has_new_odom0_received = false;
+		has_new_odom1_received = false;
 
 		ros::spinOnce();
 
