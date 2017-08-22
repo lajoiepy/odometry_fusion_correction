@@ -1,0 +1,7 @@
+odom_frame_id: odom
+child_frame_id: base_link
+odom0_topic: /mavros/local_position/odom
+odom1_topic: /rovio/odometry
+correction_suffix: /corrected
+odom0_covariance_diag_value: 0.5
+# odom1_covariance_diag_value: null
